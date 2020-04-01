@@ -49,6 +49,7 @@ import math
 import json
 import operator
 import collections
+import re
 import numpy as np
 import os.path
 from os import path
@@ -209,7 +210,7 @@ class IndexItem:
     #   @exception     None
     ## 
     def return_sorted_posting(self):
-        for key, postingTemp in self.__posting.items():
+        for _, postingTemp in self.__posting.items():
             postingTemp.sort()
 
         self.__sorted_postings    = sorted(self.__posting.items(), key=operator.itemgetter(0))
@@ -230,7 +231,7 @@ class IndexItem:
     #   @exception     None
     ## 
     def sort(self):
-        for key, postingTemp in self.__posting.items():
+        for _, postingTemp in self.__posting.items():
             postingTemp.sort()
 
         self.__sorted_postings    = sorted(self.__posting.items(), key=operator.itemgetter(0))
@@ -261,7 +262,7 @@ class IndexItem:
 #
 # @bug       None documented yet   
 #
-class InvertedIndex:
+class Index:
     ##
     #    @param         self
     #    @param         topicName
@@ -269,11 +270,12 @@ class InvertedIndex:
     #    @brief         The constructor. 
     #    @exception     None documented yet
     ##
-    def __init__(self):
+    def __init__(self,index_type=1):
         self.__items     = {} # list of IndexItems
-        self.__nDocs     = 0  # the number of indexed documents
         self.__tokenizer = Tokenizer()
-
+        self.__index_type = index_type
+        self.__docIDs = set()
+        self.__terms = set()
     ##
     #   @brief     This method return the total number of doc in our data set
     #
@@ -283,8 +285,41 @@ class InvertedIndex:
     #   @exception     None
     ## 
     def get_total_number_Doc(self):
-        return self.__nDocs
+        return len(self.__docIDs)
+
+    ##
+    #   @brief     This method return the total number of doc in our data set
+    #
+    #   @param         self
+    #   @param         Doc
+    #   @return        int
+    #   @exception     None
+    ## 
+    def get_total_number_terms(self):
+        return len(self.__terms)
+
+    ##
+    #   @brief     This method returns a sorted list of docIDS
+    #
+    #   @param         self
+    #   @param         Doc
+    #   @return        int
+    #   @exception     None
+    ## 
+    def get_docIDs(self):
+        return sorted(self.__docIDs)
     
+    ##
+    #   @brief     This method return a sorted list of terms 
+    #
+    #   @param         self
+    #   @param         Doc
+    #   @return        int
+    #   @exception     None
+    ## 
+    def get_terms(self):
+        return sorted(self.__terms)
+
     ##
     #   @brief     This method return the total number of doc in our data set
     #
@@ -293,7 +328,7 @@ class InvertedIndex:
     #   @return        items: dict
     #   @exception     None
     ## 
-    def get_items_inverted(self):
+    def get_items(self):
         return self.__items
 
     ##
@@ -311,23 +346,69 @@ class InvertedIndex:
     #   @return        None
     #   @exception     None
     ## 
-    def indexDoc(self, doc): # indexing a Document object
-        #Concatenate document title
-        newDoc              = doc.title +" "+   doc.author +" "+  doc.body
-        docID               = doc.docID
+    def index_doc(self, doc): # indexing a Document object
+        newDoc              = doc['indexed_content']
+        docID               = doc['docID']
         full_stemmed_list   = self.__tokenizer.transpose_document_tokenized_stemmed(newDoc)
-        
+        self.__docIDs.add(docID)
+
         for position, term in enumerate(full_stemmed_list):
-            if self.__items.get(term) !=None:
-                self.__items[term].add(docID, position)
+            #may be more efficient to split into a forward and backward method for larger datasets
+            # 0: forward index
+            # 1: inverted_index
+            index_key,index_value = {   
+                0:(docID,term),
+                1:(term,docID)
+            }[self.__index_type]
+
+            if term not in self.__terms:
+                self.__terms.add(term)
+
+            if self.__items.get(index_key) != None:
+                self.__items[index_key].add(index_value, position)
             else:
                 #key does not exists in dict
-                newPosting                          = Posting(docID)
+                newPosting                          = Posting(index_value)
                 newPosting.append(position)
-                self.__items[term]                  = IndexItem(term)
-                self.__items[term].set_posting_list(docID, newPosting)
-        self.__nDocs += 1
-  
+                self.__items[index_key]                  = IndexItem(index_key)
+                self.__items[index_key].set_posting_list(index_value, newPosting)
+
+
+    def single_doc_file(self,filepath): # indexing a file
+
+        ## NOT DONE NEED TO INCLUDE PARSING FOR THE SUBJECT WHICH SHOULD BE EASY. REMEMBER TO CHECK IF SUBJECT EXISTS SO THAT WE CAN HANDLE EXCEPTIONS
+        with open(filepath,'rb') as f:
+            lines = [str.strip(line.decode("utf-8", "ignore")) for line in f]
+        num_lines=-1
+        for line in lines:
+            if re.match("Lines:[\\s]*[0-9]+$" , line):
+                num_lines = int(str.split(line)[1])
+        doc =   {   
+                    'indexed_content': ' '.join(lines[-num_lines:]),
+                    'docID':filepath
+                }
+        self.index_doc(doc)
+
+
+    def indexDir(self,dirpath, file_format=0, recursive = True): # indexing files in a directory
+        
+        file_format_map =   {
+                                0:self.single_doc_file
+                            }
+
+        if file_format not in file_format_map:
+            raise ValueError('fileformat not supported')
+
+        file_processor = file_format_map[file_format]
+
+        if recursive==False:
+            for filename in os.listdir(dirpath):
+                if os.path.isfile(os.path.join(dirpath,filename)):
+                    file_processor(os.path.join(dirpath,filename))
+        else:
+            for directory in os.walk(dirpath):
+                for filename in directory[2]: 
+                    file_processor(os.path.join(directory[0],filename))
 
     ##
     #   @brief     This method Sorts all posting list by document ID. 
@@ -338,92 +419,77 @@ class InvertedIndex:
     #   @exception     None
     ## 
     def sort(self):
-        ''' sort all posting lists by docID'''
-        for term, posting in self.__items.items():
-          posting.sort()
-  
-   
+        ''' sort all posting lists'''
+        for _, posting in self.__items.items():
+            posting.sort()
 
     ##
-    #   @brief     This method sorts all indexing terms in our index 
+    #   @brief     This method sorts all indexing primary key values in our index 
     #
     #   @param         self
     #   @return        OrderedDict
     #   @exception     None
     ## 
-    def sort_terms(self):
-        ''' sort all posting lists by docID'''
+    def sort_postings(self):
+        ''' sort IndexItems according to associated index key'''
         return collections.OrderedDict(sorted(self.__items.items(), key=operator.itemgetter(0)))
-        #
   
-    ##
-    #   @brief     This method finds a term in the indexing and returns its posting list
-    #
-    #   @param         self
-    #   @param         term
-    #   @return        postingList:dict
-    #   @exception     None
-    ## 
-    def find(self, term):
-        return self.__items[term]
+    # ##
+    # #   @brief     This method to dumper for json
+    # #
+    # #   @param         self
+    # #   @param         obj
+    # #   @return        toJSON or dict
+    # #   @exception     None
+    # ## 
+    # def dumper(self, obj):
+    #     try:
+    #         return obj.toJSON()
+    #     except:
+    #         return obj.__dict__
+    # 
+    # ##
+    # #   @brief     This method Serializes the inverted index to a json format and 
+    # #              clears the Memory that holds this dictionary
+    # #
+    # #   @param         self
+    # #   @param         filename
+    # #   @return        ValueError
+    # #   @exception     None
+    # ## 
+    # def save(self, filename):
+    #     write_stream = open(filename, 'w')
+    #     listTerm = self.sort_postings()
+    #     dictMain = {}
+    #     listInfo = {}
 
+    #     for term, postingList in listTerm.items():
+    #         dictTemp = postingList.posting_list_to_string()
+    #         dictTemp["idf"] = self.idf(term)
+    #         dictMain[term] = dictTemp
 
-    ##
-    #   @brief     This method to dumper for json
-    #
-    #   @param         self
-    #   @param         obj
-    #   @return        toJSON or dict
-    #   @exception     None
-    ## 
-    def dumper(self, obj):
-        try:
-            return obj.toJSON()
-        except:
-            return obj.__dict__
+    #     listInfo["nDoc"] = self.get_total_number_Doc()
+    #     listInfo["Data"] = dictMain
+    #     try: 
+    #         write_stream.write(json.dumps(listInfo, indent=3))
+    #     except ValueError: 
+    #          print ("Is not valid json")
+    #     write_stream.close()
 
-    ##
-    #   @brief     This method Serializes the inverted index to a json format and 
-    #              clears the Memory that holds this dictionary
-    #
-    #   @param         self
-    #   @param         filename
-    #   @return        ValueError
-    #   @exception     None
-    ## 
-    def save(self, filename):
-        write_stream = open(filename, 'w')
-        listTerm = self.sort_terms()
-        dictMain = {}
-        listInfo = {}
-
-        for term, postingList in listTerm.items():
-            dictTemp = postingList.posting_list_to_string()
-            dictTemp["idf"] = self.idf(term)
-            dictMain[term] = dictTemp
-
-        listInfo["nDoc"] = self.get_total_number_Doc()
-        listInfo["Data"] = dictMain
-        try: 
-            write_stream.write(json.dumps(listInfo, indent=3))
-        except ValueError as e: 
-             print ("Is not valid json")
-        write_stream.close()
-
-    ##
-    #   @brief     This method deserializes a json file in a object by reallocating the self.__items
-    #
-    #   @param         self
-    #   @param         filename
-    #   @return        json: dict
-    #   @exception     ValueError
-    ## 
-    def load(self, filename):
-        try: 
-            with open(filename) as json_file:
-                return json.load(json_file)
-        except ValueError as e: 
-            print ("Is not valid json") 
+    # ##
+    # #   @brief     This method deserializes a json file in a object by reallocating the self.__items
+    # #
+    # #   @param         self
+    # #   @param         filename
+    # #   @return        json: dict
+    # #   @exception     ValueError
+    # ## 
+    # def load(self, filename):
+    #     try: 
+    #         with open(filename) as json_file:
+    #             return json.load(json_file)
+    #     except ValueError: 
+    #         print ("Is not valid json") 
 
 
     ##
@@ -437,31 +503,69 @@ class InvertedIndex:
     ## 
     def idf(self, term):
         ''' '''
-        if not term in self.__items:
+        if term not in self.__items:
             return 0
-        termData = self.__items[term]
+
         N = self.get_total_number_Doc()
-        df = len(termData.get_posting_list())
+
+        if self.__index_type == 0:
+            doc_frequency = 0
+            for d in self.get_items():
+                if term in d.get_posting_list():
+                    doc_frequency+=1
+
+        elif self.__index_type == 1:
+            termData = self.__items[term]
+            doc_frequency = len(termData.get_posting_list())
+            
         #inverse document frequency 
-        idf = round(math.log10(N/(float(df))), 4)
+        inverse_doc_frequency = round(math.log10(N/(float(doc_frequency))), 4)
         #probabilistic inverse document frequency from  
         #idf = round(math.log10(N - df /(float(df))), 4)
-        return idf
-      
+        return inverse_doc_frequency
+        
     ##
     #   @brief     This method create IDF for doc
     #
     #   @param         self
-    #   @return        idf: {term: {docID:idf}}
+    #   @return        idf: {term:idf, term2:idf}
     #   @exception     None
     ## 
-    def idfDict(self):
-        idf = collections.OrderedDict()
-    
-        for term, postingList in self.sort_terms().items():
-            idf[term] = self.idf(term)
+    def all_idfs(self):
+        if self.__index_type == 0:
+            # technically no faster in big-O time complexity but is better in theta as there is no for terms in documents they dont occur in
+            #import pdb; pdb.set_trace()
+            idf_dictionary = collections.OrderedDict(zip(self.get_terms(),[0]*self.get_total_number_terms()))
+            N = self.get_total_number_Doc()
+            for doc in self.get_items():
+                for term in self.get_items()[doc].get_posting_list():
+                    idf_dictionary[term]+=1
+            for term in idf_dictionary:
+                idf_dictionary[term] = round(math.log10(N/(float(idf_dictionary[term]))), 4)
 
-        return idf
+        elif self.__index_type == 1:
+            idf_dictionary = collections.OrderedDict()
+            for term in self.get_terms():
+                idf_dictionary[term] = self.idf(term)
+
+        return idf_dictionary 
+
+    ##
+    #   @brief     This method create IDF for doc
+    #
+    #   @param         self
+    #   @return        idf: {doc1:{term:idf, term2:idf}, doc2:{term2:idf, term3:idf} }
+    #   @exception     None
+    ## 
+    def idf_Dict(self):
+        tf_dict = self.tf_Dict()
+        all_idfs = self.all_idfs()
+
+        for doc in tf_dict:
+            for term in tf_dict[doc]:
+                tf_dict[doc][term] = all_idfs[term]
+
+        return tf_dict
 
     ##
     #   @brief     This method create TF for add doc
@@ -469,41 +573,108 @@ class InvertedIndex:
     #   Another way is TF = (Frequency of the word in the sentence) / (Total number of words in the sentence)
     #   
     #   @param         self
-    #   @return        word_tf_values: {term: {docID: tf, docID: tf }}  
+    #   @return        word_tf_values: {term: tf, term2: tf2, ... }
     #   @exception     None
     ##   
-    def tf_doc(self):
-        word_tf_values = collections.OrderedDict()
-        for term, postingList in self.sort_terms().items():
-            doc_tf = collections.OrderedDict()
-            for docID, post in postingList.get_posting_list().items():
-                doc_tf[docID] = round(math.log10(1 + post.term_freq()), 4) #log normalize 
-            word_tf_values[term] = doc_tf
-        return word_tf_values
+    def doc_tf(self,docID):
+
+        if self.__index_type == 0:
+            if docID not in self.get_items():
+                return {}
+            posting = self.get_items()[docID].get_posting_list()
+            return{term: round(math.log10(1 + posting[term].term_freq()), 4) for term in posting}
+
+        elif self.__index_type == 1:
+            items = self.get_items()
+            return{term: round(math.log10(1 + items[term].get_posting_list()[docID].term_freq()), 4) for term in items if docID in items[term].get_posting_list()}
+
+        return None
+
+    ##
+    #   @brief     This method create TF for add doc
+    #   There are different ways to represent TF we used tf = log(1+tf) 
+    #   Another way is TF = (Frequency of the word in the sentence) / (Total number of words in the sentence)
+    #   
+    #   @param         self
+    #   @return        word_tf_values: {docID: tf, docID: tf }  
+    #   @exception     None
+    ##   
+    def term_tf(self,term):
+
+        if self.__index_type == 0:
+            items = self.get_items()
+            return{doc: round(math.log10(1 + items[doc].get_posting_list()[term].term_freq()), 4) for doc in items if term in items[doc].get_posting_list()}
+        elif self.__index_type == 1:
+            posting = self.get_items()[term].get_posting_list()
+            return{doc : round(math.log10(1 + posting[doc].term_freq()), 4) for doc in posting}
+
+
+        return None
+
+    ##
+    #   @brief     This method create IDF for doc
+    #
+    #   @param         self
+    #   @return        idf: {term: {docID:idf}}
+    #   @exception     None
+    ## 
+    def tf_Dict(self):
+
+        if self.__index_type == 0:
+            tf_dictionary = collections.OrderedDict()
+            for docID in self.get_docIDs():
+                tf_dictionary.update({docID:self.doc_tf(docID)})
+
+        if self.__index_type == 1:
+            tf_dictionary = collections.OrderedDict({docid:{} for docid in self.get_docIDs()})
+            for term in self.get_terms():
+                for docID,tf in self.term_tf(term).items():
+                    tf_dictionary[docID].update({term:tf})
+
+        return tf_dictionary
 
     ##
     #   @brief     This method create tfidf for all doc. 
     #              It structure is of the form {docID: {term: tf-idf,term: tf-idf }}    
     #   @param         self
-    #   @param         word_tf_valuesm
+    #   @param         self
     #   @param         idfDict    
-    #   @return        TFIDF_dict:{docID: {term: tf-idf,term: tf-idf }}  
+    #   @return        TFIDF_dict:{docID: {term: tf-idf,term: tf-idf },docID2: {term: tf-idf,term: tf-idf }}  
     #   @exception     None
     ##  
-    def tf_idf(self,word_tf_valuesm, idfDict):
-        TFIDF_dict =  collections.defaultdict(list)
-        
-        for term, postingList in self.sort_terms().items():
-            tf_idf = 0.0 
-            for doc , doctf in word_tf_valuesm[term].items():
-                term_tf_idf_doc = {}
-                tf_idf = doctf * idfDict[term]
-                term_tf_idf_doc[term] = tf_idf
-                TFIDF_dict[doc].append(term_tf_idf_doc)
-        return TFIDF_dict  
+    def tfidf_Dict(self):
+        #import pdb;pdb.set_trace()
+        tf_dict = self.tf_Dict()
+        all_idfs = self.all_idfs()
+
+        for doc in tf_dict:
+            for term in tf_dict[doc]:
+                tf_dict[doc][term] = tf_dict[doc][term] * all_idfs[term]
+
+        return tf_dict
+
+    ##
+    #   @brief     This method create tfidf for all doc. 
+    #              It structure is of the form {docID: {term: tf-idf,term: tf-idf }}    
+    #   @param         self
+    #   @param         self
+    #   @param         idfDict    
+    #   @return        TFIDF_dict:{docID: {term: tf-idf,term: tf-idf },docID2: {term: tf-idf,term: tf-idf }}  
+    #   @exception     None
+    ##  
+    def tfidf(self,docs):
+        tf_dict = {doc:self.doc_tf(doc) for doc in docs}
+        terms = set.union(*[set(tf_dict[doc].keys()) for doc in tf_dict])
+        doc_idfs = {term : self.idf(term) for term in terms}
+
+        for doc in tf_dict:
+            for term in tf_dict[doc]:
+                tf_dict[doc][term] = tf_dict[doc][term] * doc_idfs[term]
+
+        return tf_dict  
 
     
-        ##
+    ##
     
     ##
     #   @brief     This method Saves the current state of the InvertedIndex
@@ -541,31 +712,30 @@ class InvertedIndex:
         return invertedIndexer
 
 
-def indexingCranfield():
-    #ToDo: indexing the Cranfield dataset and save the index to a file
-    # command line usage: "python index.py cran.all index_file"
-    # the index is saved to index_file
+# def indexingCranfield():
+#     #ToDo: indexing the Cranfield dataset and save the index to a file
+#     # command line usage: "python index.py cran.all index_file"
+#     # the index is saved to index_file
 
-    filePath = sys.argv[1]
-    fileName = sys.argv[2]
+#     filePath = sys.argv[1]
+#     fileName = sys.argv[2]
 
-    #filePath = "src/CranfieldDataset/cran.all"
-    #fileName = "src/Data/tempFile"
-    #filePath = "./CranfieldDataset/cran.all"
-    #fileName = "./Data/tempFile"
+#     #filePath = "src/CranfieldDataset/cran.all"
+#     #fileName = "src/Data/tempFile"
+#     #filePath = "./CranfieldDataset/cran.all"
+#     #fileName = "./Data/tempFile"
    
-    invertedIndexer = InvertedIndex()
-    #data = CranFile(filePath)
-    #for doc in data.docs:
-    #   invertedIndexer.indexDoc(doc)
+#     invertedIndexer = InvertedIndex()
+#     #data = CranFile(filePath)
+#     #for doc in data.docs:
+#     #   invertedIndexer.indexDoc(doc)
 
-   #invertedIndexer.storeData(fileName)
-    print("Done")
+#    #invertedIndexer.storeData(fileName)
+#     print("Done")
    
 #python index.py CranfieldDataset/cran.all Data/tempFile
 if __name__ == '__main__':
-    test()
-    #indexingCranfield()
-    
+    #test()
+    pass
 
 
