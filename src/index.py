@@ -271,6 +271,7 @@ class Index:
     #    @exception     None documented yet
     ##
     def __init__(self,index_type=1):
+        # 0 is forward 1 in inverted
         self.__items     = {} # list of IndexItems
         self.__tokenizer = Tokenizer()
         self.__index_type = index_type
@@ -395,7 +396,7 @@ class Index:
         file_format_map =   {
                                 0:self.single_doc_file
                             }
-
+        
         if file_format not in file_format_map:
             raise ValueError('fileformat not supported')
 
@@ -503,7 +504,7 @@ class Index:
     ## 
     def idf(self, term):
         ''' '''
-        if term not in self.__items:
+        if term not in self.__terms:
             return 0
 
         N = self.get_total_number_Doc()
@@ -596,7 +597,7 @@ class Index:
     #   Another way is TF = (Frequency of the word in the sentence) / (Total number of words in the sentence)
     #   
     #   @param         self
-    #   @return        word_tf_values: {docID: tf, docID: tf }  
+    #   @return        word_tf_values: {docID: tf, docID: tf}  
     #   @exception     None
     ##   
     def term_tf(self,term):
