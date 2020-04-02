@@ -7,6 +7,7 @@
 #@author        Nathaniel Crossman & Adam
 #
 import warnings
+import itertools
 from sklearn.svm import SVC
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import MultinomialNB
@@ -37,10 +38,11 @@ class AnyClassification:
     #    @exception     None documented yet
     ##
     def __init__(self, Classifier,feature_vectors,targets,):
-        self.clf = Classifier()
+        self.clf = Classifier
         self.X = feature_vectors
         self.y = targets
-        self.scores = 0.00
+        self.scores = []
+        self.scoring = ['f1_macro','precision_macro','recall_macro']
     ##
     #   @brief     This method runs the specified Classifier 
     #
@@ -49,7 +51,8 @@ class AnyClassification:
     #   @exception     None
     ##  
     def run(self):
-        self.scores = cross_val_score(self.clf, self.X, self.y, cv=5, scoring='f1_macro')
+        for scoringtpye in self.scoring:
+            self.scores.append(cross_val_score(self.clf, self.X, self.y, cv=5, scoring=scoringtpye))
    
 
     ##
@@ -63,8 +66,15 @@ class AnyClassification:
     ##   
     def printResults(self, dataType):
         #  95% confidence level (scores.std() * 2)
-        print(self.clf.__class__.__name__,": %0.2f (+/- %0.2f)" % (self.scores.mean(), self.scores.std() * 2), "||",dataType)
-
+        meanList    = self.getMean()
+        stdList     = self.getConfidence_Std()
+        typesScorringUseds = self.scoring
+    
+        print("Classifier:" ,self.clf.__class__.__name__, " running traning data file:" ,dataType)
+        print("--------------------------------------------------------------------------------------------------")
+        for (mean, std, typeScorringUsed) in zip(meanList, stdList,typesScorringUseds ):
+            print(typeScorringUsed, ": %0.2f (+/- %0.2f)" % (mean, std))
+        print("--------------------------------------------------------------------------------------------------")
 
     ##
     #   @brief     This method returns the  mean scores
@@ -74,7 +84,11 @@ class AnyClassification:
     #   @exception     None
     ##   
     def getMean(self):
-        return self.scores.mean()
+        meanScorces = []
+        for score in self.scores:
+            meanScorces.append(score.mean())
+        return meanScorces
+
 
     ##
     #   @brief     This method returns  95% confidence level
@@ -84,20 +98,24 @@ class AnyClassification:
     #   @exception     None
     ##  
     def getConfidence_Std(self):
-        return (self.scores.std() * 2)  
+        std = []
+        for score in self.scores:
+         std.append((score.std() * 2))
+
+        return std   
 ##
 #   @brief     This method launches the classification program  
 ## 
 def run():
     files = ["training_data_file.TF", "training_data_file.IDF","training_data_file.TFIDF"]
-    Classifier = [MultinomialNB,BernoulliNB,KNeighborsClassifier,SVC]
+    Classifier = [MultinomialNB(),BernoulliNB(),KNeighborsClassifier(),SVC(class_weight="balanced")]
     for classifier in Classifier:
         for aFile in files:
+            # pylint: disable=unbalanced-tuple-unpacking
             feature_vectors, targets = load_svmlight_file(aFile)
             classification = AnyClassification(classifier,feature_vectors,targets)
             classification.run()
             classification.printResults(aFile)
-
 
 if __name__ == '__main__':
     run()
