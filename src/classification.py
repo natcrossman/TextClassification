@@ -1,7 +1,14 @@
 ## @package classification.py
+#We will experiment with several algorithmss: 
+#Multinominal Naive Bayes, Bernoulli Naive Bayes, k Nearest Neighbor, and SVM. 
 #
+#To simplify the task, we use the default parameters for alll the classifiers besides SVC(class_weight="balanced")
 #
+#We used cross validation for the whole dataset to get more reliable estimation of the classifier performance - 
+# We looked at the mean and standard deviation for the selected metric. 
 #
+#We Repot the mean and 2*std of 5-fold with f1_macro, precision_macro, and recall_macro, respectively. 
+#@note: a reasonble classifier typically has F1 score in the range >0.5.
 #@copyright     All rights are reserved, this code/project is not Open Source or Free
 #@bug           None Documented     
 #@author        Nathaniel Crossman & Adam
