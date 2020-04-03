@@ -15,7 +15,6 @@
 #@author        Nathaniel Crossman & Adam
 #
 import warnings
-import itertools
 from sklearn.svm import SVC
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import MultinomialNB
@@ -51,6 +50,10 @@ class AnyClassification:
         self.y = targets
         self.scores = []
         self.scoring = ['f1_macro','precision_macro','recall_macro']
+
+    def ReplaceScoringType(self, newListOfScoring):
+        self.scoring = newListOfScoring
+
     ##
     #   @brief     This method runs the specified Classifier 
     #
@@ -82,7 +85,7 @@ class AnyClassification:
         print("--------------------------------------------------------------------------------------------------")
         for (mean, std, typeScorringUsed) in zip(meanList, stdList,typesScorringUseds ):
             print(typeScorringUsed, ": %0.2f (+/- %0.2f)" % (mean, std))
-        print("--------------------------------------------------------------------------------------------------")
+        print("--------------------------------------------------------------------------------------------------\n\n")
 
     ##
     #   @brief     This method returns the  mean scores
@@ -109,14 +112,16 @@ class AnyClassification:
         std = []
         for score in self.scores:
          std.append((score.std() * 2))
-
         return std   
+
+
+
 ##
 #   @brief     This method launches the classification program  
 ## 
 def run():
     files = ["training_data_file.TF", "training_data_file.IDF","training_data_file.TFIDF"]
-    Classifier = [MultinomialNB(),BernoulliNB(),KNeighborsClassifier(),SVC(class_weight="balanced")]
+    Classifier = getAllClassifier()
     for classifier in Classifier:
         for aFile in files:
             # pylint: disable=unbalanced-tuple-unpacking
@@ -124,6 +129,10 @@ def run():
             classification = AnyClassification(classifier,feature_vectors,targets)
             classification.run()
             classification.printResults(aFile)
+
+def getAllClassifier():
+    return  [MultinomialNB(),BernoulliNB(),KNeighborsClassifier(n_neighbors=6),SVC(gamma='auto', class_weight="balanced")]
+
 
 if __name__ == '__main__':
     run()
