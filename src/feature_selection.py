@@ -12,6 +12,7 @@
 #@author        Nathaniel Crossman & Adam
 #
 import time
+import decimal
 import warnings
 import numpy as np
 from itertools import repeat
@@ -26,41 +27,29 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import cross_val_score
 from sklearn.feature_selection import chi2, mutual_info_classif
 
-
-
-# def run_mutual_info_classif(k_value):
-#     #Note: Since we got better performance and result using TFIDF from previous experinment we are going to use you it
-#     fileT = "training_data_file.TFIDF"
-#     k_value = rangeOfTestK_values()
-#     Classifier = getAllClassifier()
-#     f1scores =  defaultdict(list)
-
-#     for classifier in Classifier:
-#         for i in k_value:
-#             # pylint: disable=unbalanced-tuple-unpacking
-#             feature_vectors, targets = load_svmlight_file(aFile)
-#             X = SelectKBest(mutual_info_classif, k=i).fit_transform(feature_vectors, targets)
-#             classification = AnyClassification(classifier,X ,targets)
-#             classification.ReplaceScoringType(["f1_macro"])
-#             classification.run()
-#             f1scores[classifier].append(classification.getMean())
-#     plotData(k_value,f1scores, "f1_macro with mutual_info_classif")  
-#    print(kvalue)
-    # print(f1scores)
-    # print(len(f1scores["MultinomialNB"]))
-    # print(f1scores["MultinomialNB"])
-    # print(len(kvalue))
-
-    # print(len(f1scores["BernoulliNB"]))
-    # print(f1scores["BernoulliNB"])
-
-    # print(len(f1scores["KNeighborsClassifier"]))
-    # print(f1scores["KNeighborsClassifier"])
-    
-    # print(len(f1scores["SVC"]))
-
-    # print(f1scores["SVC"])          
-
+##
+#   @brief     This method generates a range in floats
+#
+#   @param         start
+#   @param         stop
+#   @param         step 
+#   @return        list of k-values
+#   @exception     None
+##
+def float_range(start, stop, step):
+  while start < stop:
+    yield float(start)
+    start += decimal.Decimal(step)
+     
+##
+#   @brief     This method generates the Graphical Plots of the Classifier results
+#
+#   @param         kvalue
+#   @param         f1scores
+#   @param         ylabel_vale 
+#   @return        list of k-values
+#   @exception     None
+##
 def plotData(kvalue,f1scores, ylabel_vale):
     kvalue = np.array(kvalue)
 
@@ -69,50 +58,68 @@ def plotData(kvalue,f1scores, ylabel_vale):
     Kneighbour_scores = f1scores["KNeighborsClassifier"]
     svc_scores = f1scores["SVC"]
 
-    plt.figure(figsize=(9,9))
-    plt.plot(kvalue, multinomialNB_scores,label = " Multinominal NB")
-    plt.plot(kvalue, bernoullinBF_scores, label = "Bernoulli NB")
-    plt.plot(kvalue, Kneighbour_scores, label = "kNN")
-    plt.plot(kvalue, svc_scores, label = "SVM")
-    plt.xlabel("K")
-    plt.ylabel(ylabel_vale)
-    plt.legend(loc = 'best')
-    plt.show()
+    plt.figure(figsize=(10,10))
 
-def rangeOfTestK_values(beginning=300,end=20000,RangeBetween=300):
+    plt.ylim(0.0, 1)    
+    plt.xlim(0, 20000)   
+    
+    plt.yticks(fontsize=10)    
+    plt.xticks(fontsize=10)  
+
+    for y in float_range(0, 1, "0.1"):    
+        plt.plot(range(0, 20000), [y] * len(range(0, 20000)), "--", lw=0.5, color="black", alpha=0.3)  
+    
+    
+    plt.tick_params(axis="both", which="both", bottom="off", top="off",    
+                labelbottom="on", left="off", right="off", labelleft="on")    
+
+    plt.plot(kvalue, multinomialNB_scores,lw=2.5, label = "Multinominal NB")
+    plt.plot(kvalue, bernoullinBF_scores, lw=2.5, label = "Bernoulli NB")
+    plt.plot(kvalue, Kneighbour_scores, lw=2.5, label = "kNN")
+    plt.plot(kvalue, svc_scores, lw=2.5, label = "SVM")
+    plt.xlabel("K-Value",fontsize=16)
+    plt.ylabel(ylabel_vale, fontsize=16)
+    plt.legend(loc="best", title="Classifiers", frameon=False)
+    plt.title("Results of Feature Selection", fontsize=22)  
+    plt.show()
+    plt.savefig(ylabel_vale +".png", bbox_inches="tight")
+
+##
+#   @brief     This method generates the number of K value.  
+#               Default configuration is from 300 to 20,000 with intervals of 300
+#
+#   @param         beginning=300
+#   @param         end=20000
+#   @param         RangeBetween=300
+#   @return        list of k-values
+#   @exception     None
+##
+def rangeOfTestK_values(beginning=100,end=20000,RangeBetween=300):
     return list(np.arange(beginning, end, RangeBetween))
 
-#Note: Since we got better performance and result using TFIDF from previous experinment we are going to use you it
-def run_chi2(k_value,classifier, fileT):
-    tempList = []
-    for i in k_value:
-        # pylint: disable=unbalanced-tuple-unpacking
-        feature_vectors, targets = load_svmlight_file(fileT)
-        X = SelectKBest(chi2, k=i).fit_transform(feature_vectors, targets)
-        classification = AnyClassification(classifier,X ,targets)
-        classification.ReplaceScoringType(["f1_macro"])
-        classification.run()
-        tempList.append(classification.getMean())
-    return tempList
 
-def poolRun(func):
+def poolRun(f):
+    listOfX = []
     f1scores =  defaultdict(list)
     Classifiers = getAllClassifier()
-    k_valueFirst = rangeOfTestK_values()
-    num_workers = (mp.cpu_count()- 2)
+    #k_valueFirst = rangeOfTestK_values()
+    num_workers = (mp.cpu_count())
     # pylint: disable=unbalanced-tuple-unpacking
     feature_vectors, targets = load_svmlight_file("training_data_file.TFIDF")
+    if f.__name__ == "chi2":
+            # if you run this code for mutual_info_classif it take for every 2320.036301612854 seconds
+            #it is faster for chi2
+            k_valueFirst = rangeOfTestK_values()
+            start_time = time.time()
+            listOfX = [SelectKBest(f, k=i).fit_transform(feature_vectors, targets) for  i in k_valueFirst]
+            print( "SelectKBest \t--- %s seconds ---" % (time.time() - start_time))
+    else: #It is a lot faster running mutual_info_classif with pool 722.4064118862152 seconds 
+        start_time = time.time()
+        k_valueFirst = rangeOfTestK_values(300,20000,2500) #I may want to make range smaller  300,20000,2500
+        pool = mp.Pool(num_workers)
+        listOfX += pool.map(partial(getListOfX, f=f, feature_vectors=feature_vectors, targets=targets), k_valueFirst)
+        print( "SelectKBest \t--- %s seconds ---" % (time.time() - start_time))
 
-    start_time = time.time()
-    listX_y = [[SelectKBest(chi2, k=i).fit_transform(feature_vectors, targets),targets] for  i in k_valueFirst]
-    print("--- %s seconds ---" % (time.time() - start_time))
-    start_time = time.time()
-    listOfX = [SelectKBest(chi2, k=i).fit_transform(feature_vectors, targets) for  i in k_valueFirst]
-    
-    print("--- %s seconds ---" % (time.time() - start_time))
-
-
-    slipList = split_list(listX_y,num_workers)
     for classifier in Classifiers: 
         start_time = time.time()
         meanlist = []
@@ -120,31 +127,42 @@ def poolRun(func):
         classification.ReplaceScoringType(["f1_macro"])
 
         pool = mp.Pool(num_workers)
-        #meanlist.append(pool.starmap(classification.setNewData, listX_y))
+        #These two are just a little slowwer
+        #meanlist += pool.starmap(classification.setNewData, listX_y)
+        #meanlist += pool.map(partial(classification.setNewData, targets=targets), listOfX)
         meanlist +=pool.starmap(classification.setNewData, zip(listOfX, repeat(targets)))
-        #meanlist.append(pool.map(partial(classification.setNewData, targets=targets), listOfX))
+
         f1scores[classifier.__class__.__name__] = meanlist
-        
-        print(classifier.__class__.__name__, "--- %s seconds ---" % (time.time() - start_time))
+        print(classifier.__class__.__name__, "\t--- %s seconds ---" % (time.time() - start_time))
 
 
+    plotData(k_valueFirst,f1scores, ("f1_macro with "+ str(f.__name__)))  
 
-       
-       
-
-    #print(f1scores)
-    plotData(k_valueFirst,f1scores, "f1_macro with chi2")   
-
-#Splits the K value list into parts
+##
+#   @brief     This method with an array of k value of into specific junk science
+#
+#   @param         a the array
+#   @param         n the split point
+#   @return        mean score
+#   @exception     None
+##
 def split_list(a, n):
     k, m = divmod(len(a), n)
     newList = (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
     return list(newList)
 
 
+def getListOfX(i, f, feature_vectors,targets):
+    #From testing this way is just a little slower
+    #listX_y = [[SelectKBest(f, k=i).fit_transform(feature_vectors, targets),targets] for  i in k_valueFirst]
+    listOfX = SelectKBest(f, k=i).fit_transform(feature_vectors, targets)
+    return listOfX
+
 if __name__ == '__main__':
     mp.freeze_support()
+    typeOfF = [chi2, mutual_info_classif]
     start_time = time.time()
-    poolRun(run_chi2)
+    for f in typeOfF:
+        poolRun(f)
     print("--- %s seconds ---" % (time.time() - start_time))
 

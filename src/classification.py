@@ -36,8 +36,6 @@ warnings.filterwarnings('ignore')
 #
 # @bug       None documented yet
 #
-
-
 class AnyClassification:
     ##
     #    @param         self
@@ -53,12 +51,30 @@ class AnyClassification:
         self.scores = []
         self.scoring = ['f1_macro', 'precision_macro', 'recall_macro']
 
+    ##
+    #   @brief     This method set the feature selected and targets and Lunch is the classifier
+    #
+    #   @param         self
+    #   @param         feature_vectors
+    #   @param         targets
+    #   @note:         This is used in the feature selection
+    #   @return        mean score
+    #   @exception     None
+    ##
     def setNewData(self, feature_vectors, targets):
         self.X = feature_vectors
         self.y = targets
         self.run()
         return self.getMean()[0]
 
+    ##
+    #   @brief     This method set a new scorring type
+    #
+    #   @param         self
+    #   @param         newListOfScoring
+    #   @return        None
+    #   @exception     None
+    ##
     def ReplaceScoringType(self, newListOfScoring):
         self.scoring = newListOfScoring
 
@@ -141,7 +157,11 @@ def run():
             classification.run()
             classification.printResults(aFile)
 
-
+##
+#   @brief     This method gets all the classifiers
+#   @return        list of Classifier
+#   @exception     None
+##
 def getAllClassifier():
     return [MultinomialNB(), BernoulliNB(), KNeighborsClassifier(n_neighbors=6), SVC(class_weight='balanced')]
 
@@ -150,8 +170,9 @@ if __name__ == '__main__':
     run()
 
 
-# clf = MultinomialNB()
 
+#This is the easy way to do it but now fast or Efficient
+# clf = MultinomialNB()
 # feature_vectors, targets = load_svmlight_file("training_data_file.TF")
 # scores = cross_val_score(clf, feature_vectors, targets, cv=5, scoring='f1_macro')
 # print("MultinomialNB Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
