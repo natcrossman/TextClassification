@@ -57,7 +57,7 @@ def plotData(kvalue,f1scores, ylabel_vale):
     bernoullinBF_scores = f1scores["BernoulliNB"]
     Kneighbour_scores = f1scores["KNeighborsClassifier"]
     svc_scores = f1scores["SVC"]
-
+    
     plt.figure(figsize=(10,10))
 
     plt.ylim(0.0, 1)    
@@ -81,8 +81,10 @@ def plotData(kvalue,f1scores, ylabel_vale):
     plt.ylabel(ylabel_vale, fontsize=16)
     plt.legend(loc="best", title="Classifiers", frameon=False)
     plt.title("Results of Feature Selection", fontsize=22)  
-    plt.show()
+    fig = plt.gcf()
     plt.savefig(ylabel_vale +".png", bbox_inches="tight")
+    plt.show()
+    plt.close(fig)
 
 ##
 #   @brief     This method generates the number of K value.  
@@ -163,6 +165,7 @@ if __name__ == '__main__':
     typeOfF = [chi2, mutual_info_classif]
     start_time = time.time()
     for f in typeOfF:
+        mp.freeze_support()
         poolRun(f)
     print("--- %s seconds ---" % (time.time() - start_time))
 
