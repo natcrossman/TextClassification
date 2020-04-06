@@ -1,70 +1,78 @@
-## @package classification.py
-#We will experiment with several algorithmss: 
-#Multinominal Naive Bayes, Bernoulli Naive Bayes, k Nearest Neighbor, and SVM. 
+# @package classification.py
+# We will experiment with several algorithmss:
+# Multinominal Naive Bayes, Bernoulli Naive Bayes, k Nearest Neighbor, and SVM.
 #
-#To simplify the task, we use the default parameters for alll the classifiers besides SVC(class_weight="balanced")
+# To simplify the task, we use the default parameters for alll the classifiers besides SVC(class_weight="balanced")
 #
-#We used cross validation for the whole dataset to get more reliable estimation of the classifier performance - 
-# We looked at the mean and standard deviation for the selected metric. 
+# We used cross validation for the whole dataset to get more reliable estimation of the classifier performance -
+# We looked at the mean and standard deviation for the selected metric.
 #
-#We Repot the mean and 2*std of 5-fold with f1_macro, precision_macro, and recall_macro, respectively. 
-#@note: a reasonble classifier typically has F1 score in the range >0.5.
+# We Repot the mean and 2*std of 5-fold with f1_macro, precision_macro, and recall_macro, respectively.
+# @note: a reasonble classifier typically has F1 score in the range >0.5.
 
-#@copyright     All rights are reserved, this code/project is not Open Source or Free
-#@bug           None Documented     
-#@author        Nathaniel Crossman & Adam
+# @copyright     All rights are reserved, this code/project is not Open Source or Free
+# @bug           None Documented
+# @author        Nathaniel Crossman & Adam
 #
 import warnings
 from sklearn.svm import SVC
-from sklearn.naive_bayes import BernoulliNB
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.datasets import load_svmlight_file
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import BernoulliNB
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import f1_score
+from sklearn.datasets import load_svmlight_file
 
 
 ##
-# @brief     Need to remove warning about f1 
+# @brief     Need to remove warning about f1
 #
-# @bug       None documented yet   
+# @bug       None documented yet
 #
 warnings.filterwarnings('ignore')
 
 ##
 # @brief     This class used to abstract away which classifier is being run
 #
-# @bug       None documented yet   
+# @bug       None documented yet
 #
+
+
 class AnyClassification:
     ##
     #    @param         self
     #    @param         docID
     #    @return        None
-    #    @brief         The constructor. 
+    #    @brief         The constructor.
     #    @exception     None documented yet
     ##
-    def __init__(self, Classifier,feature_vectors,targets,):
+    def __init__(self, Classifier, feature_vectors, targets):
         self.clf = Classifier
         self.X = feature_vectors
         self.y = targets
         self.scores = []
-        self.scoring = ['f1_macro','precision_macro','recall_macro']
+        self.scoring = ['f1_macro', 'precision_macro', 'recall_macro']
+
+    def setNewData(self, feature_vectors, targets):
+        self.X = feature_vectors
+        self.y = targets
+        self.run()
+        return self.getMean()[0]
 
     def ReplaceScoringType(self, newListOfScoring):
         self.scoring = newListOfScoring
 
     ##
-    #   @brief     This method runs the specified Classifier 
+    #   @brief     This method runs the specified Classifier
     #
     #   @param         self
     #   @return        None
     #   @exception     None
-    ##  
+    ##
     def run(self):
         for scoringtpye in self.scoring:
-            self.scores.append(cross_val_score(self.clf, self.X, self.y, cv=5, scoring=scoringtpye))
-   
+            self.scores.append(cross_val_score(
+                self.clf, self.X, self.y, cv=5, scoring=scoringtpye))
 
     ##
     #   @brief     This method pritns the result of classification
@@ -74,16 +82,18 @@ class AnyClassification:
     #   @see           https://github.com/scikit-learn/scikit-learn/issues/1940
     #   @return        None
     #   @exception     None
-    ##   
+    ##
+
     def printResults(self, dataType):
         #  95% confidence level (scores.std() * 2)
-        meanList    = self.getMean()
-        stdList     = self.getConfidence_Std()
+        meanList = self.getMean()
+        stdList = self.getConfidence_Std()
         typesScorringUseds = self.scoring
-    
-        print("Classifier:" ,self.clf.__class__.__name__, " running traning data file:" ,dataType)
+
+        print("Classifier:", self.clf.__class__.__name__,
+              " running traning data file:", dataType)
         print("--------------------------------------------------------------------------------------------------")
-        for (mean, std, typeScorringUsed) in zip(meanList, stdList,typesScorringUseds ):
+        for (mean, std, typeScorringUsed) in zip(meanList, stdList, typesScorringUseds):
             print(typeScorringUsed, ": %0.2f (+/- %0.2f)" % (mean, std))
         print("--------------------------------------------------------------------------------------------------\n\n")
 
@@ -93,13 +103,12 @@ class AnyClassification:
     #   @param         self
     #   @return        meanScore
     #   @exception     None
-    ##   
+    ##
     def getMean(self):
         meanScorces = []
         for score in self.scores:
             meanScorces.append(score.mean())
         return meanScorces
-
 
     ##
     #   @brief     This method returns  95% confidence level
@@ -107,31 +116,34 @@ class AnyClassification:
     #   @param         self
     #   @return        Std
     #   @exception     None
-    ##  
+    ##
+
     def getConfidence_Std(self):
         std = []
         for score in self.scores:
-         std.append((score.std() * 2))
-        return std   
-
+            std.append((score.std() * 2))
+        return std
 
 
 ##
-#   @brief     This method launches the classification program  
-## 
+#   @brief     This method launches the classification program
+##
 def run():
-    files = ["training_data_file.TF", "training_data_file.IDF","training_data_file.TFIDF"]
+    files = ["training_data_file.TF",
+             "training_data_file.IDF", "training_data_file.TFIDF"]
     Classifier = getAllClassifier()
     for classifier in Classifier:
         for aFile in files:
             # pylint: disable=unbalanced-tuple-unpacking
             feature_vectors, targets = load_svmlight_file(aFile)
-            classification = AnyClassification(classifier,feature_vectors,targets)
+            classification = AnyClassification(
+                classifier, feature_vectors, targets)
             classification.run()
             classification.printResults(aFile)
 
+
 def getAllClassifier():
-    return  [MultinomialNB(),BernoulliNB(),KNeighborsClassifier(n_neighbors=6),SVC(gamma='auto', class_weight="balanced")]
+    return [MultinomialNB(), BernoulliNB(), KNeighborsClassifier(n_neighbors=6), SVC(class_weight='balanced')]
 
 
 if __name__ == '__main__':
