@@ -170,7 +170,7 @@ if __name__ == '__main__':
     typeOfF = [chi2, mutual_info_classif]
     start_time = time.time()
     for f in typeOfF:
-        mp.freeze_support(f)
+        mp.freeze_support()
         poolRun(f)
     print("Total system timne: \t--- %s seconds ---" % (time.time() - start_time))
 
