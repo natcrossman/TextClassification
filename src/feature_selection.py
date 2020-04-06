@@ -102,42 +102,47 @@ def rangeOfTestK_values(beginning=100,end=20000,RangeBetween=300):
 
 def poolRun(f):
     listOfX = []
+    k_valueFirst = []
     f1scores =  defaultdict(list)
     Classifiers = getAllClassifier()
-    #k_valueFirst = rangeOfTestK_values()
     num_workers = (mp.cpu_count())
     # pylint: disable=unbalanced-tuple-unpacking
     feature_vectors, targets = load_svmlight_file("training_data_file.TFIDF")
+    print( "Starting SelectKBest with ", f.__name__)
     if f.__name__ == "chi2":
             # if you run this code for mutual_info_classif it take for every 2320.036301612854 seconds
             #it is faster for chi2
             k_valueFirst = rangeOfTestK_values()
             start_time = time.time()
             listOfX = [SelectKBest(f, k=i).fit_transform(feature_vectors, targets) for  i in k_valueFirst]
-            print( "SelectKBest \t--- %s seconds ---" % (time.time() - start_time))
+            print( "Finished SelectKBest \t--- %s seconds ---" % (time.time() - start_time), f.__name__)
     else: #It is a lot faster running mutual_info_classif with pool 722.4064118862152 seconds 
         start_time = time.time()
         k_valueFirst = rangeOfTestK_values(300,20000,2500) #I may want to make range smaller  300,20000,2500
         pool = mp.Pool(num_workers)
         listOfX += pool.map(partial(getListOfX, f=f, feature_vectors=feature_vectors, targets=targets), k_valueFirst)
-        print( "SelectKBest \t--- %s seconds ---" % (time.time() - start_time))
-
+        print( "FinishedSelectKBest \t--- %s seconds ---" % (time.time() - start_time),f.__name__)
+    print("k-values used: \n", k_valueFirst)
     for classifier in Classifiers: 
+        print( "\nStarting ", classifier.__class__.__name__)
+        print("--------------------------------------------------------------------------------------------------")
         start_time = time.time()
         meanlist = []
         classification = AnyClassification(classifier,feature_vectors,targets)
         classification.ReplaceScoringType(["f1_macro"])
-
         pool = mp.Pool(num_workers)
+
         #These two are just a little slowwer
         #meanlist += pool.starmap(classification.setNewData, listX_y)
         #meanlist += pool.map(partial(classification.setNewData, targets=targets), listOfX)
         meanlist +=pool.starmap(classification.setNewData, zip(listOfX, repeat(targets)))
 
         f1scores[classifier.__class__.__name__] = meanlist
-        print(classifier.__class__.__name__, "\t--- %s seconds ---" % (time.time() - start_time))
-
-
+        print("Finished ",classifier.__class__.__name__, "\t--- %s seconds ---" % (time.time() - start_time))
+        print("--------------------------------------------------------------------------------------------------")
+    #Testing 
+    print(f1scores)
+    #Plot
     plotData(k_valueFirst,f1scores, ("f1_macro with "+ str(f.__name__)))  
 
 ##
@@ -167,5 +172,5 @@ if __name__ == '__main__':
     for f in typeOfF:
         mp.freeze_support()
         poolRun(f)
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print("Total system timne: \t--- %s seconds ---" % (time.time() - start_time))
 
