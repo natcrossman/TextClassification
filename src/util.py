@@ -73,7 +73,7 @@ class Tokenizer:
     ## 
     def tokenize_text_for_q(self, doc):
         list_token = []
-        tokenizer = RegexpTokenizer(r'\w+')
+        tokenizer = RegexpTokenizer(r'\w+') # from nltk.tokenize import sent_tokenize, word_tokenize
         list_token = tokenizer.tokenize(doc)
         # because of the limited size of our corpus, spelling correction results in slight boost
         # with a larger corpus you would not do this, especially due to the simplicity of the spelling correction
@@ -143,7 +143,7 @@ class Tokenizer:
     #   @return        list 
     #   @exception     None
     ## 
-    def spell_correction(self, list_token):
+    def spell_correction(self, list_token): 
         temp=  [correction(item) for item in list_token]
         return temp
        

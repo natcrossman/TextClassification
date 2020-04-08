@@ -1,0 +1,19 @@
+2020-04-03T12:05:27,559 Non-user install because site-packages writeable
+2020-04-03T12:05:27,706 Created temporary directory: C:\Users\natcr\AppData\Local\Temp\pip-ephem-wheel-cache-ku7oe48d
+2020-04-03T12:05:27,707 Created temporary directory: C:\Users\natcr\AppData\Local\Temp\pip-req-tracker-k6ycxjvo
+2020-04-03T12:05:27,707 Initialized build tracking at C:\Users\natcr\AppData\Local\Temp\pip-req-tracker-k6ycxjvo
+2020-04-03T12:05:27,707 Created build tracker: C:\Users\natcr\AppData\Local\Temp\pip-req-tracker-k6ycxjvo
+2020-04-03T12:05:27,707 Entered build tracker: C:\Users\natcr\AppData\Local\Temp\pip-req-tracker-k6ycxjvo
+2020-04-03T12:05:27,708 Created temporary directory: C:\Users\natcr\AppData\Local\Temp\pip-install-upd3mpbu
+2020-04-03T12:05:27,708 Cleaning up...
+2020-04-03T12:05:27,710 Removed build tracker: 'C:\\Users\\natcr\\AppData\\Local\\Temp\\pip-req-tracker-k6ycxjvo'
+2020-04-03T12:05:27,711 ERROR: You must give at least one requirement to install (see "pip help install")
+2020-04-03T12:05:27,711 Exception information:
+2020-04-03T12:05:27,711 Traceback (most recent call last):
+2020-04-03T12:05:27,711   File "c:\users\natcr\desktop\college\cs 7800 information retrieva\project\textclassification\src\venv\lib\site-packages\pip\_internal\cli\base_command.py", line 186, in _main
+2020-04-03T12:05:27,711     status = self.run(options, args)
+2020-04-03T12:05:27,711   File "c:\users\natcr\desktop\college\cs 7800 information retrieva\project\textclassification\src\venv\lib\site-packages\pip\_internal\commands\install.py", line 301, in run
+2020-04-03T12:05:27,711     wheel_cache
+2020-04-03T12:05:27,711   File "c:\users\natcr\desktop\college\cs 7800 information retrieva\project\textclassification\src\venv\lib\site-packages\pip\_internal\cli\req_command.py", line 292, in populate_requirement_set
+2020-04-03T12:05:27,711     '(see "pip help %(name)s")' % opts)
+2020-04-03T12:05:27,711 pip._internal.exceptions.CommandError: You must give at least one requirement to install (see "pip help install")
