@@ -140,6 +140,22 @@ class Posting:
         return (self.__docID, self.__positions)
   
 
+
+
+
+#### use d.setdefault(key, defaultvalue)
+#### such as
+#### use d.setdefault(key, []).append() .setdefault() either returns the item or the default item which is now the value
+
+#### popitem on dict for multithreading
+#### deque maybe somewhere?
+
+
+
+
+
+
+
 ##
 # @brief     Tested
 #
