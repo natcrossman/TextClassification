@@ -287,7 +287,7 @@ class Index:
     #    @exception     None documented yet
     ##
     def __init__(self,index_type=1):
-        # 0 is forward 1 in inverted
+        # 0 is forward 1 is inverted
         self.__items     = {} # list of IndexItems
         self.__tokenizer = Tokenizer()
         self.__index_type = index_type

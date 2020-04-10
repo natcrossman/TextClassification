@@ -56,3 +56,30 @@ def main():
 if __name__ == '__main__':
     main()
     
+'''
+equivalancy between feature_definition and class_definition is trivial using diff
+
+equivalency between training_data files is done with the following code in a python interpreter
+it effectively reads in each line (document) and checks that the same features are present and that they have the same value
+it does this by creating dictionaries of each document with term:value and then compares files created with a forward and reverse index
+
+file1 = 'training_data_file.IDF'
+file2 = 'training_data_file.idf'
+
+with open(file1) as f1:
+    lines1 = [line for line in f1]
+with open(file2) as f2:
+    lines2 = [line for line in f2]
+
+if not (len(lines1) == len(lines2)):
+    print('Failure files are not the same length')
+
+for linx,l1 in enumerate(lines1):
+    l2 = lines2[linx]
+
+    d1 = dict([tuple(str.split(t,':')) for t in str.split(l2)[1:]])
+    d2 = dict([tuple(str.split(t,':')) for t in str.split(l2)[1:]])
+    if not (all([d1[k]==d2[k] for k in d1]) and (str.split(l1)[0] == str.split(l2)[0])):
+        print('Failure: '+str(linx)+' do not match')
+
+'''
