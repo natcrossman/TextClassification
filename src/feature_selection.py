@@ -169,7 +169,7 @@ def getListOfX(i, f, feature_vectors,targets):
 
 if __name__ == '__main__':
     #freeze does not work on linux
-    if sys.platform == "Windows":
+    if sys.platform == "win32" or sys.platform == "win64" or sys.platform == "windows" :
         mp.freeze_support()
     typeOfF = [chi2, mutual_info_classif]
     start_time = time.time()

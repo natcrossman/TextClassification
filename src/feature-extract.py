@@ -41,12 +41,11 @@ def main():
         with open(training_data_filename+'.'+dataset[1],'w') as outfile:
             for docid,data in dataset[0].items():
                 
-                if sys.platform == "win32" or sys.platform == "win64" or sys.platform == "Windows" :
+                if sys.platform == "win32" or sys.platform == "win64" or sys.platform == "windows" :
                     stop = docid[::-1].find("\\")
                     start = docid[::-1].find('\\', docid[::-1].find('\\') + 1)
                     directory = docid[-start:-stop-1]
 
-                    #import pdb;pdb.set_trace()
                 else:
                     stop = docid[::-1].find('/')
                     start = docid[::-1].find('/', docid[::-1].find('/') + 1)
