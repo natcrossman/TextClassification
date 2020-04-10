@@ -6,7 +6,6 @@
 '''
 from nltk.stem.snowball import SnowballStemmer
 from nltk.tokenize import word_tokenize
-from norvig_spell import correction
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 import doc
@@ -58,13 +57,7 @@ class Tokenizer:
     
     ##
     #   @brief  This method is used for tokenizer queries. 
-    #   The reason I created an extra method, that does the exact same thing as the previous tokenizer method,
-    #   is for the small performance gain doing spell correction  inside this method gives me.
-    #   Previously we called a separate method that took the completely tokenized list and then did spell correction on each term..
     #   This is not very good, O(n+M) 
-    #   @note for doc indexing use before doc.title + " " + doc.body
-    #   because of the limited size of our corpus, spelling correction results in slight boost
-    #   with a larger corpus you would not do this, especially due to the simplicity of the spelling correction
     #   @param         self
     #   @param         doc
     #   @return        list_token list
@@ -75,9 +68,7 @@ class Tokenizer:
         list_token = []
         tokenizer = RegexpTokenizer(r'\w+') # from nltk.tokenize import sent_tokenize, word_tokenize
         list_token = tokenizer.tokenize(doc)
-        # because of the limited size of our corpus, spelling correction results in slight boost
-        # with a larger corpus you would not do this, especially due to the simplicity of the spelling correction
-        list_token= [correction(word.lower()) if word not in self.known_words else word.lower() for word in list_token] 
+        list_token= [word.lower() if word not in self.known_words else word.lower() for word in list_token] 
         return list_token
 
     ##
@@ -130,23 +121,7 @@ class Tokenizer:
     def stemming_list(self, list_token):
         temp=  [self.stemming(item) for item in list_token]
         return temp
-
-    ##
-    #   @brief   This method will spell correct all token words
-    #   @bug     The spell correction function doesn't necessarily seem to work as expected. 
-    #            It changes even correctly spelled words. Best results seem to come from using the 
-    #            dictionary as the base text for the spoke correction algorithm. 
-    #            Tried other documents with no bettering success.
-    #
-    #   @param         self
-    #   @param         list_token
-    #   @return        list 
-    #   @exception     None
-    ## 
-    def spell_correction(self, list_token): 
-        temp=  [correction(item) for item in list_token]
-        return temp
-       
+    
 # Technically all above methods could be private
 
     ##
