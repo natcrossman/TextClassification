@@ -119,7 +119,9 @@ def poolRun(f):
             print( "Finished SelectKBest \t--- %s seconds ---" % (time.time() - start_time), f.__name__)
     else: #It is a lot faster running mutual_info_classif with pool 722.4064118862152 seconds 
         start_time = time.time()
-        k_valueFirst = rangeOfTestK_values(300,20000,300) #I may want to make range smaller  300,20000,2500
+        #keeping range smaller for mutual_info_classif does not really change the result that much
+        #k_valueFirst = rangeOfTestK_values(300,20000,300) #65 test for k-value
+        k_valueFirst = rangeOfTestK_values(300,20000,2500) #8 test in range 300 to 20000
         pool = mp.Pool(num_workers)
         listOfX += pool.map(partial(getListOfX, f=f, feature_vectors=feature_vectors, targets=targets), k_valueFirst)
         print( "FinishedSelectKBest \t--- %s seconds ---" % (time.time() - start_time),f.__name__)
