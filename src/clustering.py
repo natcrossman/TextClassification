@@ -1,3 +1,8 @@
+# @package classification.py
+# @copyright     All rights are reserved, this code/project is not Open Source or Free
+# @bug           None Documented
+# @author        Nathaniel Crossman & Adam
+#
 import time
 import warnings
 from sklearn.metrics import silhouette_score,normalized_mutual_info_score
@@ -33,6 +38,7 @@ if __name__ == '__main__':
     # When k-values range was [300 - 19800] = 65 k-values
     #Based on these experimental results we decided to use the chi2 Method With K value sent to 5500
     smallerFeatureSet_matrix= (SelectKBest(chi2, k=5500).fit_transform(feature_vectors, targets)).toarray()
+    print("Number of Clusters: ", k_values)
     print("Starting clustering for both KMean and Hierarchical")
     start_time = time.time()
     for cluster_size in k_values:
