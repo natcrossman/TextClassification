@@ -1,3 +1,4 @@
+import time
 import warnings
 from sklearn.metrics import silhouette_score,normalized_mutual_info_score
 from sklearn.cluster import KMeans
@@ -33,6 +34,7 @@ if __name__ == '__main__':
     #Based on these experimental results we decided to use the chi2 Method With K value sent to 5500
     smallerFeatureSet_matrix= (SelectKBest(chi2, k=5500).fit_transform(feature_vectors, targets)).toarray()
     print("Starting clustering for both KMean and Hierarchical")
+    start_time = time.time()
     for cluster_size in k_values:
         k_meansModelTemp = KMeans(n_clusters=cluster_size)
         k_meansModelTemp.fit(smallerFeatureSet_matrix)
@@ -46,50 +48,29 @@ if __name__ == '__main__':
         silhouetteScoresAgglomerative.append(silhouette_score(smallerFeatureSet_matrix, labels,metric='euclidean'))
         mutualInformationListAgglomerative.append(normalized_mutual_info_score(targets, labels))
     print("Ending Clustering")
-
+    print("Total system timne: \t--- %s seconds ---" % (time.time() - start_time))
 
     plt.figure(figsize=(10,7))   
-    plt.xlim(2, 26)   
-    plt.plot(k_values, silhouetteScores)
+    plt.plot(k_values, silhouetteScores,lw=2.5, label = "KMeans")
+    plt.plot(k_values, silhouetteScoresAgglomerative, lw=2.5, label = "Hierarchical Clustering")
     plt.xlabel("Number of K-Values")
     plt.ylabel("Silhouette Scores")
-    plt.title("KMeans Silhouette Scores", fontsize=22)  
+    plt.title("KMeans and Hierarchical Clustering", fontsize=22)  
+    plt.legend(loc="best", frameon=False)
     fig = plt.gcf()
-    plt.savefig("SilhouetteScoreKmeans.png", bbox_inches="tight")
+    plt.savefig("SilhouetteScoreKmeansAndHierarchical.png", bbox_inches="tight")
     plt.show()
     plt.close(fig)
 
-
-    plt.figure(figsize=(10,7))
-    plt.xlim(2, 26)   
-    plt.plot(k_values, mutualInformationList)
+    plt.figure(figsize=(10,7))   
+    plt.plot(k_values, mutualInformationList,lw=2.5, label = "KMeans")
+    plt.plot(k_values, mutualInformationListAgglomerative, lw=2.5, label = "Hierarchical Clustering")
     plt.xlabel("Number of K-Values")
     plt.ylabel("Normalized Mutual Information Scores")
-    plt.title("KMeans Mutual Information Scores", fontsize=22)  
+    plt.title("KMeans and Hierarchical Clustering", fontsize=22)  
+    plt.legend(loc="best",  frameon=False)
     fig = plt.gcf()
-    plt.savefig("mutualInformationListKmeans.png", bbox_inches="tight")
-    plt.show()
-    plt.close(fig)
-
-    plt.figure(figsize=(10,7))
-    plt.xlim(2, 26)   
-    plt.plot(k_values, silhouetteScoresAgglomerative)
-    plt.xlabel("Number of K-Values")
-    plt.ylabel("Silhouette Scores")
-    plt.title("Hierarchical Clustering Silhouette Scores", fontsize=22)  
-    fig = plt.gcf()
-    plt.savefig("silhouetteScoresAgglomerativeHierarchical.png", bbox_inches="tight")
-    plt.show()
-    plt.close(fig)
-
-    plt.figure(figsize=(10,7))
-    plt.xlim(2, 26)   
-    plt.plot(k_values, mutualInformationListAgglomerative)
-    plt.xlabel("Number of K-Values")
-    plt.ylabel("Normalized Mutual Information Scores")
-    plt.title("Hierarchical Mutual Information Scores", fontsize=22)  
-    fig = plt.gcf()
-    plt.savefig("mutualInformationListAgglomerativeHierarchical.png", bbox_inches="tight")
+    plt.savefig("mutualInformationListKmeansAndHierarchical.png", bbox_inches="tight")
     plt.show()
     plt.close(fig)
 
