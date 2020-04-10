@@ -140,6 +140,22 @@ class Posting:
         return (self.__docID, self.__positions)
   
 
+
+
+
+#### use d.setdefault(key, defaultvalue)
+#### such as
+#### use d.setdefault(key, []).append() .setdefault() either returns the item or the default item which is now the value
+
+#### popitem on dict for multithreading
+#### deque maybe somewhere?
+
+
+
+
+
+
+
 ##
 # @brief     Tested
 #
@@ -377,15 +393,19 @@ class Index:
 
     def single_doc_file(self,filepath): # indexing a file
 
-        ## NOT DONE NEED TO INCLUDE PARSING FOR THE SUBJECT WHICH SHOULD BE EASY. REMEMBER TO CHECK IF SUBJECT EXISTS SO THAT WE CAN HANDLE EXCEPTIONS
+        subject = ''
         with open(filepath,'rb') as f:
             lines = [str.strip(line.decode("utf-8", "ignore")) for line in f]
-        num_lines=-1
         for line in lines:
-            if re.match("Lines:[\\s]*[0-9]+$" , line):
+            if re.match("^Subject:.*$" , line):
+                subject = str.strip(line[8:])
+                break
+        for line in lines:
+            if re.match("^Lines:[\\s]*[0-9]+$" , line):
                 num_lines = int(str.split(line)[1])
+                break
         doc =   {   
-                    'indexed_content': ' '.join(lines[-num_lines:]),
+                    'indexed_content': ' '.join(lines[-num_lines:]+[subject]),
                     'docID':filepath
                 }
         self.index_doc(doc)
@@ -535,7 +555,6 @@ class Index:
     def all_idfs(self):
         if self.__index_type == 0:
             # technically no faster in big-O time complexity but is better in theta as there is no for terms in documents they dont occur in
-            #import pdb; pdb.set_trace()
             idf_dictionary = collections.OrderedDict(zip(self.get_terms(),[0]*self.get_total_number_terms()))
             N = self.get_total_number_Doc()
             for doc in self.get_items():
