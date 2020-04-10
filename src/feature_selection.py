@@ -11,6 +11,7 @@
 #@bug           None Documented     
 #@author        Nathaniel Crossman & Adam
 #
+import sys
 import time
 import decimal
 import warnings
@@ -166,11 +167,14 @@ def getListOfX(i, f, feature_vectors,targets):
     return listOfX
 
 if __name__ == '__main__':
-    mp.freeze_support()
+    #freeze does not work on linux
+    if sys.platform == "Windows":
+        mp.freeze_support()
     typeOfF = [chi2, mutual_info_classif]
     start_time = time.time()
     for f in typeOfF:
-        mp.freeze_support()
+        if sys.platform == "Windows":
+            mp.freeze_support()
         poolRun(f)
     print("Total system timne: \t--- %s seconds ---" % (time.time() - start_time))
 
