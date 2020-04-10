@@ -34,7 +34,7 @@ def main():
     idf = my_index.idf_Dict()
     tfidf = my_index.tfidf_Dict()
 
-    output_data_and_names = [(tf,'tf'),(idf,'idf'),(tfidf,'tfidf')]
+    output_data_and_names = [(tf,'TF'),(idf,'IDF'),(tfidf,'TFIDF')]
 
     #write out features and stuff
     for dataset in output_data_and_names:
