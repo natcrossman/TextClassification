@@ -40,8 +40,21 @@ def main():
     for dataset in output_data_and_names:
         with open(training_data_filename+'.'+dataset[1],'w') as outfile:
             for docid,data in dataset[0].items():
-                directory = re.search('/([^/]*)/', docid[::-1]).group(1)[::-1]
+                
+                if sys.platform == "win32" or sys.platform == "win64" or sys.platform == "Windows" :
+                    stop = docid[::-1].find("\\")
+                    start = docid[::-1].find('\\', docid[::-1].find('\\') + 1)
+                    directory = docid[-start:-stop-1]
+
+                    #import pdb;pdb.set_trace()
+                else:
+                    stop = docid[::-1].find('/')
+                    start = docid[::-1].find('/', docid[::-1].find('/') + 1)
+                    directory = docid[-start:-stop-1]
+                   
+
                 category = class_definition[directory]
+
                 outstring = [str(category)] + [str(inverted_feature_definition[term])+':'+str(termvalue) for term,termvalue in data.items()]
                 outfile.write(' '.join(outstring)+'\n')
     
