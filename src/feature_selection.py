@@ -119,7 +119,7 @@ def poolRun(f):
             print( "Finished SelectKBest \t--- %s seconds ---" % (time.time() - start_time), f.__name__)
     else: #It is a lot faster running mutual_info_classif with pool 722.4064118862152 seconds 
         start_time = time.time()
-        k_valueFirst = rangeOfTestK_values(300,20000,2500) #I may want to make range smaller  300,20000,2500
+        k_valueFirst = rangeOfTestK_values(300,20000,300) #I may want to make range smaller  300,20000,2500
         pool = mp.Pool(num_workers)
         listOfX += pool.map(partial(getListOfX, f=f, feature_vectors=feature_vectors, targets=targets), k_valueFirst)
         print( "FinishedSelectKBest \t--- %s seconds ---" % (time.time() - start_time),f.__name__)
@@ -137,7 +137,8 @@ def poolRun(f):
         #meanlist += pool.starmap(classification.setNewData, listX_y)
         #meanlist += pool.map(partial(classification.setNewData, targets=targets), listOfX)
         meanlist +=pool.starmap(classification.setNewData, zip(listOfX, repeat(targets)))
-
+        maxScoreIndex = meanlist.index(max(meanlist))
+        print(classifier.__class__.__name__, "the best k-value position" , k_valueFirst[maxScoreIndex], "Score: ", meanlist[maxScoreIndex], "\n")
         f1scores[classifier.__class__.__name__] = meanlist
         print("Finished ",classifier.__class__.__name__, "\t--- %s seconds ---" % (time.time() - start_time))
         print("--------------------------------------------------------------------------------------------------")

@@ -54,7 +54,9 @@ def main():
 
 
 if __name__ == '__main__':
+    print("Starting Feature Extraction")
     main()
+    print("Finished Feature Extraction")
     
 '''
 equivalancy between feature_definition and class_definition is trivial using diff

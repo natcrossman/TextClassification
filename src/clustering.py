@@ -16,11 +16,22 @@ if __name__ == '__main__':
     mutualInformationList = []
     silhouetteScoresAgglomerative = []
     mutualInformationListAgglomerative = []
-    k_values =  rangeOfTestK_values(2,25,1)
+    k_values =  rangeOfTestK_values(2,26,1)
     # pylint: disable=unbalanced-tuple-unpacking
     feature_vectors, targets = load_svmlight_file("training_data_file.TFIDF")
-    #get a small better feature set K could be 100 or 1000 or what ever smallerFeatureSet is a csr_matrix
-    smallerFeatureSet_matrix= (SelectKBest(mutual_info_classif, k=1000).fit_transform(feature_vectors, targets)).toarray()
+
+
+    #Using the results/ experiments done in feature selection, we decided to use the Best K-value to reduce feature set
+    #In order to get the best K value we ran several experiments in feature selection to do this. We got the maximum result.
+    #Results of experiments:
+    # mutual_info_classif - MultinomialNB the best k-value  12800 and  Score:  0.8357452379706963
+    # When k-values range was [300 - 17800] = 8 k-values
+    # Next, mutual_info_classif MultinomialNB the best k-value position 11100 Score:  0.8413667139030705 
+    # When k-values range was [300 - 19800] = 65 k-values
+    # For chi2 - MultinomialNB the best k-value position 5500 Score:  0.8869621504029693
+    # When k-values range was [300 - 19800] = 65 k-values
+    #Based on these experimental results we decided to use the chi2 Method With K value sent to 5500
+    smallerFeatureSet_matrix= (SelectKBest(chi2, k=5500).fit_transform(feature_vectors, targets)).toarray()
     print("Starting clustering for both KMean and Hierarchical")
     for cluster_size in k_values:
         k_meansModelTemp = KMeans(n_clusters=cluster_size)
