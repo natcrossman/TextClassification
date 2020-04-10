@@ -40,8 +40,8 @@ def main():
     for dataset in output_data_and_names:
         with open(training_data_filename+'.'+dataset[1],'w') as outfile:
             for docid,data in dataset[0].items():
-                directory = re.search('/(.*)/', docid)
-                category = class_definition[directory.group(1)]
+                directory = re.search('/([^/]*)/', docid[::-1]).group(1)[::-1]
+                category = class_definition[directory]
                 outstring = [str(category)] + [str(inverted_feature_definition[term])+':'+str(termvalue) for term,termvalue in data.items()]
                 outfile.write(' '.join(outstring)+'\n')
     
