@@ -11,13 +11,6 @@ warnings.filterwarnings('ignore')
 
 
 
-
-def get_new_silhouette_score(labels,k_meansModelTemp, cluster_size):
-    #samples > 2 and   cluster_size > 2
-    if cluster_size >= 2:
-        return silhouette_score(k_meansModelTemp, labels,metric='euclidean')
-    return 0
-
 if __name__ == '__main__':
     silhouetteScores = []
     mutualInformationList = []
@@ -27,24 +20,25 @@ if __name__ == '__main__':
     # pylint: disable=unbalanced-tuple-unpacking
     feature_vectors, targets = load_svmlight_file("training_data_file.TFIDF")
     #get a small better feature set K could be 100 or 1000 or what ever smallerFeatureSet is a csr_matrix
-    smallerFeatureSet_matrix= SelectKBest(mutual_info_classif, k=1000).fit_transform(feature_vectors, targets)
-    print("Starting clustering")
+    smallerFeatureSet_matrix= (SelectKBest(mutual_info_classif, k=1000).fit_transform(feature_vectors, targets)).toarray()
+    print("Starting clustering for both KMean and Hierarchical")
     for cluster_size in k_values:
         k_meansModelTemp = KMeans(n_clusters=cluster_size)
         k_meansModelTemp.fit(smallerFeatureSet_matrix)
         labels = k_meansModelTemp.labels_
-        silhouetteScores.append(get_new_silhouette_score(labels,k_meansModelTemp, cluster_size))
+        silhouetteScores.append(silhouette_score(smallerFeatureSet_matrix, labels,metric='euclidean'))
         mutualInformationList.append(normalized_mutual_info_score(targets, labels))
         #Other
         single_linkage_model = AgglomerativeClustering(n_clusters=cluster_size, linkage='ward')
         single_linkage_model.fit(smallerFeatureSet_matrix)
         labels = single_linkage_model.labels_
-        silhouetteScoresAgglomerative.append(get_new_silhouette_score(labels,single_linkage_model, cluster_size))
+        silhouetteScoresAgglomerative.append(silhouette_score(smallerFeatureSet_matrix, labels,metric='euclidean'))
         mutualInformationListAgglomerative.append(normalized_mutual_info_score(targets, labels))
     print("Ending Clustering")
 
 
-    plt.figure(figsize=(10,7))
+    plt.figure(figsize=(10,7))   
+    plt.xlim(2, 26)   
     plt.plot(k_values, silhouetteScores)
     plt.xlabel("Number of K-Values")
     plt.ylabel("Silhouette Scores")
@@ -56,6 +50,7 @@ if __name__ == '__main__':
 
 
     plt.figure(figsize=(10,7))
+    plt.xlim(2, 26)   
     plt.plot(k_values, mutualInformationList)
     plt.xlabel("Number of K-Values")
     plt.ylabel("Normalized Mutual Information Scores")
@@ -66,6 +61,7 @@ if __name__ == '__main__':
     plt.close(fig)
 
     plt.figure(figsize=(10,7))
+    plt.xlim(2, 26)   
     plt.plot(k_values, silhouetteScoresAgglomerative)
     plt.xlabel("Number of K-Values")
     plt.ylabel("Silhouette Scores")
@@ -76,6 +72,7 @@ if __name__ == '__main__':
     plt.close(fig)
 
     plt.figure(figsize=(10,7))
+    plt.xlim(2, 26)   
     plt.plot(k_values, mutualInformationListAgglomerative)
     plt.xlabel("Number of K-Values")
     plt.ylabel("Normalized Mutual Information Scores")
