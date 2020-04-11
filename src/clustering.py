@@ -56,6 +56,7 @@ if __name__ == '__main__':
     print("Ending Clustering")
     print("Total system timne: \t--- %s seconds ---" % (time.time() - start_time))
 
+    # PLOTTING RESULTS
     plt.figure(figsize=(10,7))   
     plt.plot(k_values, silhouetteScores,lw=2.5, label = "KMeans")
     plt.plot(k_values, silhouetteScoresAgglomerative, lw=2.5, label = "Hierarchical Clustering")
