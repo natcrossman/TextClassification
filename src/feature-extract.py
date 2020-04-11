@@ -9,11 +9,13 @@ import re
 import index
 
 def main():
+    # reads command line arguments
     directory_of_newsgroups_data = sys.argv[1]
     class_definition_filename = sys.argv[3]
     feature_definition_filename = sys.argv[2]
     training_data_filename = sys.argv[4]
 
+    # maps filenames to classes
     groups_to_class = [['comp.graphics','comp.os.ms-windows.misc','comp.sys.ibm.pc.hardware','comp.sys.mac.hardware','comp.windows.x'],
     ['rec.autos', 'rec.motorcycles', 'rec.sport.baseball', 'rec.sport.hockey'],
     ['sci.crypt', 'sci.electronics', 'sci.med', 'sci.space'],
@@ -21,26 +23,34 @@ def main():
     ['talk.politics.misc', 'talk.politics.guns', 'talk.politics.mideast'],
     ['talk.religion.misc', 'alt.atheism', 'soc.religion.christian']]
 
+    # create class definition
     class_definition = {j:inx+1 for inx, i  in enumerate(groups_to_class) for j in i}
 
+    # create index object, can do forward or reverse though 
+    # we used reverse in this case as all of the functionality for this project was tested in the previous project
+    # forward and reverse give the same results though feature orders and other cosmetic things are different
     my_index = index.Index(index_type=1)
     my_index.indexDir(directory_of_newsgroups_data) 
 
+    # create mappings between featuresids and the terms
     terms = my_index.get_terms()
     feature_definition = dict([(inx+1,i)for inx,i in enumerate(terms)])
     inverted_feature_definition = dict((v, k) for k, v in feature_definition.items())
 
+    # calls index functions for calculating tf, idf, and tfidf for all documents
+    # these were extended from preexisting code that was tested in the last project for reverse indexes
     tf = my_index.tf_Dict()
     idf = my_index.idf_Dict()
     tfidf = my_index.tfidf_Dict()
 
     output_data_and_names = [(tf,'TF'),(idf,'IDF'),(tfidf,'TFIDF')]
 
-    #write out features and stuff
+    #write out features
     for dataset in output_data_and_names:
         with open(training_data_filename+'.'+dataset[1],'w') as outfile:
             for docid,data in dataset[0].items():
                 
+                ## have to check for platform since windows uses \ and linux uses / it should work for either
                 if sys.platform == "win32" or sys.platform == "win64" or sys.platform == "windows" :
                     stop = docid[::-1].find("\\")
                     start = docid[::-1].find('\\', docid[::-1].find('\\') + 1)
@@ -57,11 +67,19 @@ def main():
                 outstring = [str(category)] + [str(inverted_feature_definition[term])+':'+str(termvalue) for term,termvalue in data.items()]
                 outfile.write(' '.join(outstring)+'\n')
     
+    # write out feature definition file in expected format, though json writeout is also supported in commented code
     with open(feature_definition_filename, 'w') as feature_file:
-        json.dump(feature_definition, feature_file)
+        for k,v in feature_definition.items():
+            feature_file.write(str(k)+', '+str(v)+'\n')
+        # can do it with json too 
+        #json.dump(feature_definition, feature_file)
 
+    # write out feature definition file in expected format, though json writeout is also supported in commented code
     with open(class_definition_filename, 'w') as class_file:
-        json.dump(class_definition, class_file)
+        for k,v in class_definition.items():
+            class_file.write(str(k)+', '+str(v)+'\n')
+        # can do it with json too if that is easier
+        #json.dump(class_definition, class_file)
 
 
 

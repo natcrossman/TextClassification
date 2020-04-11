@@ -100,7 +100,7 @@ def plotData(kvalue,f1scores, ylabel_vale):
 def rangeOfTestK_values(beginning=100,end=20000,RangeBetween=300):
     return list(np.arange(beginning, end, RangeBetween))
 
-
+# parallelized running of models
 def poolRun(f):
     listOfX = []
     k_valueFirst = []
