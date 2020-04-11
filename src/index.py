@@ -371,7 +371,7 @@ class Index:
 
         for position, term in enumerate(full_stemmed_list):
             #may be more efficient to split into a forward and backward method for larger datasets
-            # selects form of index from map either mapping from doc to term or visa versa
+            # selects form of index from map either mapping from doc to term or vice versa
             # 0: forward index
             # 1: inverted_index
             index_key,index_value = {   
